@@ -2,7 +2,7 @@ import json
 import traceback
 from typing import Any, Dict, ForwardRef, List, Optional, Type, Union
 import logging
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 from mcp import ClientSession, types
 from mcp.types import (
@@ -282,7 +282,17 @@ def get_tool_handler(
         def make_endpoint_func(
             endpoint_name: str, FormModel, session: ClientSession
         ):  # Parameterized endpoint
-            async def tool(form_data: FormModel) -> Union[ResponseModel, Any]:
+            async def tool(form_data: FormModel, request: Request) -> Union[ResponseModel, Any]:
+                # 提取X-Authorization头  
+                x_authorization = request.headers.get("Authorization")
+
+                # 如果存在X-Authorization，设置到MCP会话headers  
+                if x_authorization:  
+                    if hasattr(session, '_transport') and hasattr(session._transport, 'headers'):  
+                        session._transport.headers = session._transport.headers or {}  
+                        session._transport.headers["X-Authorization"] = x_authorization  
+                        logger.info(f"Injecting X-Auth. {x_authorization}")
+                  
                 args = form_data.model_dump(exclude_none=True, by_alias=True)
                 logger.info(f"Calling endpoint: {endpoint_name}, with args: {args}")
                 try:

@@ -258,9 +258,10 @@ async def create_dynamic_endpoints(app: FastAPI, api_dependency=None):
     result = await session.initialize()
     server_info = getattr(result, "serverInfo", None)
     if server_info:
-        app.title = server_info.name or app.title
+        #app.title = server_info.name or app.title
+        app.title = f"{server_info.name}:{app.title}" if server_info.name else app.title
         app.description = (
-            f"{server_info.name} MCP Server" if server_info.name else app.description
+            f"{app.title} MCP Server" if server_info.name else app.description
         )
         app.version = server_info.version or app.version
 
